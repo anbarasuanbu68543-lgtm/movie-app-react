@@ -1,28 +1,33 @@
-import { createContext, useEffect, useState } from "react";
+import { createContext, useState, useEffect } from "react";
 
 export const WatchListContext = createContext();
 
 export const WatchListProvider = ({ children }) => {
-    const [watchlist, setWatchlist] = useState(() =>
-        JSON.parse(localStorage.getItem("watchlist")) || []
-    );
+    const [watchlist, setWatchlist] = useState([])
+
+    const [genreList, setGenreList] = useState([])
 
     useEffect(() => {
-        localStorage.setItem("watchlist", JSON.stringify(watchlist));
-    }, [watchlist]);
+
+        let url = `https://api.themoviedb.org/3/genre/movie/list?api_key=9ab8cffd0b229ac4b79e4c1c9f9e887b`
+
+        fetch(url)
+            .then((response) => response.json())
+            .then((data) => setGenreList(data.genres || []))
+    }, [])
 
     const toggleWatchlist = (movie) => {
-        const exists = watchlist.some(m => m.imdbID === movie.imdbID)
+        const index = watchlist.findIndex((m) => m.id === movie.id);
 
-        if (!exists) {
+        if (index === -1) {
             setWatchlist([...watchlist, movie]);
         } else {
-            setWatchlist(watchlist.filter(m => m.imdbID !== movie.imdbID));
+            setWatchlist([...watchlist.slice(0, index), ...watchlist.slice(index + 1)]);
         }
     }
 
     return (
-        <WatchListContext.Provider value={{ watchlist, toggleWatchlist }}>
+        <WatchListContext.Provider value={{ watchlist, toggleWatchlist, genreList }}>
             {children}
         </WatchListContext.Provider>
     )
